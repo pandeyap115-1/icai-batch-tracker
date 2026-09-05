@@ -2,7 +2,7 @@ name: ICAI Tracker Check
 
 on:
   schedule:
-    - cron: '*/20 * * * *'  # Runs every 20 minutes
+    - cron: '*/20 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -36,18 +36,18 @@ jobs:
           REGION = "Western"
           COURSE = "Advanced (ICITSS) MCS Course"
 
-          # All target branches checked simultaneously every cycle
           POU_TARGETS = ["MUMBAI", "VASAI", "THANE"]
 
           def send_telegram(text: str):
               url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
               payload = {
                   "chat_id": TELEGRAM_CHAT_ID,
-                  "text": text,
-                  "parse_mode": "Markdown"
+                  "text": text
               }
               try:
-                  requests.post(url, json=payload, timeout=10)
+                  resp = requests.post(url, json=payload, timeout=10)
+                  print(f"Telegram API Status: {resp.status_code}, Response: {resp.text}")
+                  resp.raise_for_status()
               except Exception as e:
                   print(f"[-] Telegram failed: {e}")
 
@@ -81,10 +81,10 @@ jobs:
                               to_date = cols[3]
                               batch_time = cols[4]
                               card = (
-                                  f"🔹 *Batch:* `{batch_no}`\n"
-                                  f"🪑 *Seats Left:* *{seats}*\n"
-                                  f"📅 *Dates:* {from_date} to {to_date}\n"
-                                  f"⏰ *Timing:* {batch_time}\n"
+                                  f"Batch: {batch_no}\n"
+                                  f"Seats Left: {seats}\n"
+                                  f"Dates: {from_date} to {to_date}\n"
+                                  f"Timing: {batch_time}\n"
                               )
                               open_batch_cards.append(card)
                       except ValueError:
@@ -107,9 +107,9 @@ jobs:
                           batch_info = inspect_branch(page, target)
                           if batch_info:
                               msg = (
-                                  f"🚨 *SEATS AVAILABLE - {target}!*\n\n"
+                                  f"🚨 SEATS AVAILABLE - {target}!\n\n"
                                   f"{batch_info}\n"
-                                  f"🔗 [Direct Registration Link]({URL})"
+                                  f"Registration Link: {URL}"
                               )
                               send_telegram(msg)
                               print(f"[!] Active seats found for {target}!")
