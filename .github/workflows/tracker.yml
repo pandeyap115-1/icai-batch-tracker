@@ -19,7 +19,22 @@ jobs:
           pip install playwright requests
           playwright install chromium --with-deps
 
-      - name: Generate and Run Tracker Script
+      - name: Test Telegram Connection
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 -c '
+          import os, requests
+          token = os.environ.get("TELEGRAM_BOT_TOKEN")
+          chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+          url = f"https://api.telegram.org/bot{token}/sendMessage"
+          res = requests.post(url, json={"chat_id": chat_id, "text": "✅ ICAI Tracker bot connected to channel successfully!"})
+          print("TELEGRAM TEST STATUS:", res.status_code)
+          print("TELEGRAM TEST RESPONSE:", res.text)
+          '
+
+      - name: Run ICAI Batch Tracker
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -42,14 +57,15 @@ jobs:
               url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
               payload = {
                   "chat_id": TELEGRAM_CHAT_ID,
-                  "text": text
+                  "text": text,
+                  "parse_mode": "HTML",
+                  "disable_web_page_preview": True
               }
               try:
                   resp = requests.post(url, json=payload, timeout=10)
                   print(f"Telegram API Status: {resp.status_code}, Response: {resp.text}")
-                  resp.raise_for_status()
               except Exception as e:
-                  print(f"[-] Telegram failed: {e}")
+                  print(f"[-] Telegram network error: {e}")
 
           def inspect_branch(page, target: str):
               page.goto(URL, wait_until="domcontentloaded", timeout=60000)
@@ -81,10 +97,10 @@ jobs:
                               to_date = cols[3]
                               batch_time = cols[4]
                               card = (
-                                  f"Batch: {batch_no}\n"
-                                  f"Seats Left: {seats}\n"
-                                  f"Dates: {from_date} to {to_date}\n"
-                                  f"Timing: {batch_time}\n"
+                                  f"🔹 <b>Batch:</b> <code>{batch_no}</code>\n"
+                                  f"🪑 <b>Seats Left:</b> <b>{seats}</b>\n"
+                                  f"📅 <b>Dates:</b> {from_date} to {to_date}\n"
+                                  f"⏰ <b>Timing:</b> {batch_time}\n"
                               )
                               open_batch_cards.append(card)
                       except ValueError:
@@ -107,12 +123,12 @@ jobs:
                           batch_info = inspect_branch(page, target)
                           if batch_info:
                               msg = (
-                                  f"🚨 SEATS AVAILABLE - {target}!\n\n"
+                                  f"🚨 <b>SEATS AVAILABLE - {target}!</b>\n\n"
                                   f"{batch_info}\n"
-                                  f"Registration Link: {URL}"
+                                  f"🔗 <a href='{URL}'>Direct Registration Link</a>"
                               )
                               send_telegram(msg)
-                              print(f"[!] Active seats found for {target}!")
+                              print(f"[!] Alert attempted for {target}!")
                           else:
                               print(f"[-] {target}: No open seats.")
                       except Exception as err:
