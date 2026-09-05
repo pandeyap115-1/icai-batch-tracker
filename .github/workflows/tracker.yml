@@ -2,7 +2,7 @@ name: ICAI Tracker Check
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/20 * * * *'  # Runs every 20 minutes
   workflow_dispatch:
 
 jobs:
@@ -23,11 +23,9 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           cat << 'SCRIPT_EOF' > run_tracker.py
           import os
-          import time
           import requests
           from playwright.sync_api import sync_playwright
 
@@ -38,26 +36,8 @@ jobs:
           REGION = "Western"
           COURSE = "Advanced (ICITSS) MCS Course"
 
-          BRANCH_INTERVALS = {
-              "MUMBAI": 20,
-              "VASAI": 30,
-              "THANE": 80
-          }
-
-          def get_due_branches():
-              if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
-                  print("[Manual Trigger] Checking ALL branches: MUMBAI, VASAI, THANE...")
-                  return list(BRANCH_INTERVALS.keys())
-
-              epoch_min = int(time.time() // 60)
-              due = []
-              if (epoch_min // 10) % 2 == 0:
-                  due.append("MUMBAI")
-              if (epoch_min // 10) % 3 == 0:
-                  due.append("VASAI")
-              if (epoch_min // 10) % 8 == 0:
-                  due.append("THANE")
-              return due if due else ["MUMBAI"]
+          # All target branches checked simultaneously every cycle
+          POU_TARGETS = ["MUMBAI", "VASAI", "THANE"]
 
           def send_telegram(text: str):
               url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -115,15 +95,14 @@ jobs:
               return None
 
           def main():
-              due_targets = get_due_branches()
-              print(f"Checking branches: {', '.join(due_targets)}")
+              print(f"Checking all branches: {', '.join(POU_TARGETS)}")
 
               with sync_playwright() as p:
                   browser = p.chromium.launch(headless=True)
                   context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0")
                   page = context.new_page()
 
-                  for target in due_targets:
+                  for target in POU_TARGETS:
                       try:
                           batch_info = inspect_branch(page, target)
                           if batch_info:
