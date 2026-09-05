@@ -19,13 +19,13 @@ jobs:
           pip install playwright requests
           playwright install chromium --with-deps
 
-      - name: Run Inline Tracker
+      - name: Generate and Run Tracker Script
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-          python3 - << 'EOF'
+          cat << 'SCRIPT_EOF' > run_tracker.py
           import os
           import time
           import requests
@@ -141,4 +141,5 @@ jobs:
 
           if __name__ == "__main__":
               main()
-          EOF
+          SCRIPT_EOF
+          python3 run_tracker.py
