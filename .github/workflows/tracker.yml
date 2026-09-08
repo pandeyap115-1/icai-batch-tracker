@@ -19,21 +19,6 @@ jobs:
           pip install playwright requests
           playwright install chromium --with-deps
 
-      - name: Test Telegram Connection
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python3 -c '
-          import os, requests
-          token = os.environ.get("TELEGRAM_BOT_TOKEN")
-          chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-          url = f"https://api.telegram.org/bot{token}/sendMessage"
-          res = requests.post(url, json={"chat_id": chat_id, "text": "✅ ICAI Tracker bot connected to channel successfully!"})
-          print("TELEGRAM TEST STATUS:", res.status_code)
-          print("TELEGRAM TEST RESPONSE:", res.text)
-          '
-
       - name: Run ICAI Batch Tracker
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -51,7 +36,7 @@ jobs:
           REGION = "Western"
           COURSE = "Advanced (ICITSS) MCS Course"
 
-          POU_TARGETS = ["MUMBAI", "VASAI"]
+          POU_TARGETS = ["MUMBAI", "VASAI", "THANE"]
 
           def send_telegram(text: str):
               url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
