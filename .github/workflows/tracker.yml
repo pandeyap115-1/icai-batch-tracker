@@ -8,16 +8,6 @@ on:
 jobs:
   check-batches:
     runs-on: ubuntu-latest
-name: ICAI Tracker Check
-
-on:
-  schedule:
-    - cron: '*/20 * * * *'
-  workflow_dispatch:
-
-jobs:
-  check-batches:
-    runs-on: ubuntu-latest
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -133,3 +123,4 @@ jobs:
               main()
           SCRIPT_EOF
           python3 run_tracker.py
+          
